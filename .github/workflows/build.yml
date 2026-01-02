@@ -19,7 +19,7 @@ jobs:
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             -w /home/user/hostcwd \
-            kivy/buildozer:2023.10.09 \
+            kivy/buildozer:stable \
             android debug --accept-sdk-license
 
       - name: Upload APK
