@@ -1,4 +1,4 @@
-name: Build Android APK (Buildozer Native)
+name: Build Android APK (Buildozer Native – FIXED)
 
 on:
   push:
@@ -10,35 +10,46 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
           sudo apt update
           sudo apt install -y \
-            python3 python3-pip python3-setuptools python3-venv \
-            git zip unzip openjdk-17-jdk \
-            autoconf automake libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo5 cmake
+            python3 python3-pip python3-venv \
+            git zip unzip \
+            openjdk-17-jdk \
+            wget
 
       - name: Install Buildozer
         run: |
-          python3 -m pip install --upgrade pip
+          pip3 install --upgrade pip
           pip3 install cython==0.29.36 buildozer
 
-      # 🔥 THIS STEP IS CRITICAL (kills the AIDL error)
-      - name: Remove broken Android SDK
+      # 🔥 FORCE INSTALL ANDROID SDK + BUILD-TOOLS 33.0.2
+      - name: Install Android SDK + build-tools 33.0.2
+        run: |
+          mkdir -p $HOME/android-sdk
+          cd $HOME/android-sdk
+
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip commandlinetools-linux-9477386_latest.zip
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools/* cmdline-tools/latest/ || true
+
+          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+      # 🔥 WIPE ANY BROKEN BUILD0ZER SDK
+      - name: Clean Buildozer Android dir
         run: |
           rm -rf ~/.buildozer/android
 
       - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: ${{ env.HOME }}/android-sdk
         run: |
-          buildozer android debug --accept-sdk-license
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: WildlifeProStudio-APK
-          path: bin/*.apk
+          buildozer android debug
