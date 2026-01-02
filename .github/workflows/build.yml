@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -13,12 +14,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build APK (Buildozer Docker)
+      - name: Build APK with Buildozer (Docker)
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             -w /home/user/hostcwd \
-            kivy/buildozer android debug --accept-sdk-license
+            kivy/buildozer:2023.10.09 \
+            android debug --accept-sdk-license
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
