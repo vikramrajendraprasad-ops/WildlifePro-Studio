@@ -1,4 +1,4 @@
-name: Build Android APK (Buildozer Native – FIXED)
+name: Build Android APK (Locked SDK – Professional)
 
 on:
   push:
@@ -9,47 +9,69 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    env:
+      ANDROID_SDK_ROOT: /home/runner/android-sdk
+      ANDROID_HOME: /home/runner/android-sdk
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
           sudo apt update
           sudo apt install -y \
             python3 python3-pip python3-venv \
-            git zip unzip \
             openjdk-17-jdk \
-            wget
+            unzip wget git \
+            autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake
 
-      - name: Install Buildozer
+      # -------------------------------
+      # 🔒 MANUAL ANDROID SDK INSTALL
+      # -------------------------------
+      - name: Install Android SDK (locked)
         run: |
-          pip3 install --upgrade pip
-          pip3 install cython==0.29.36 buildozer
-
-      # 🔥 FORCE INSTALL ANDROID SDK + BUILD-TOOLS 33.0.2
-      - name: Install Android SDK + build-tools 33.0.2
-        run: |
-          mkdir -p $HOME/android-sdk
-          cd $HOME/android-sdk
+          mkdir -p $ANDROID_SDK_ROOT
+          cd $ANDROID_SDK_ROOT
 
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip commandlinetools-linux-9477386_latest.zip
           mkdir -p cmdline-tools/latest
           mv cmdline-tools/* cmdline-tools/latest/ || true
 
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
 
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-      # 🔥 WIPE ANY BROKEN BUILD0ZER SDK
-      - name: Clean Buildozer Android dir
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.2"
+
+      # -------------------------------
+      # Buildozer (NO auto SDK install)
+      # -------------------------------
+      - name: Install Buildozer
         run: |
-          rm -rf ~/.buildozer/android
+          pip3 install --upgrade pip
+          pip3 install cython==0.29.36 buildozer
+
+      - name: Clean Buildozer state
+        run: |
+          rm -rf ~/.buildozer
 
       - name: Build APK
         env:
-          ANDROID_SDK_ROOT: ${{ env.HOME }}/android-sdk
+          ANDROID_SDK_ROOT: /home/runner/android-sdk
+          ANDROID_HOME: /home/runner/android-sdk
+          PATH: /home/runner/android-sdk/platform-tools:/home/runner/android-sdk/cmdline-tools/latest/bin:${{ env.PATH }}
         run: |
           buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK
+          path: bin/*.apk
