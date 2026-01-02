@@ -14,7 +14,7 @@ jobs:
       ANDROID_HOME: /home/runner/android-sdk
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install system dependencies
@@ -28,16 +28,17 @@ jobs:
             zlib1g-dev libncurses5-dev libncursesw5-dev \
             libtinfo5 cmake
 
-      # -------------------------------
+      # --------------------------------
       # 🔒 MANUAL ANDROID SDK INSTALL
-      # -------------------------------
-      - name: Install Android SDK (locked)
+      # --------------------------------
+      - name: Install Android SDK (locked versions)
         run: |
           mkdir -p $ANDROID_SDK_ROOT
           cd $ANDROID_SDK_ROOT
 
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip commandlinetools-linux-9477386_latest.zip
+
           mkdir -p cmdline-tools/latest
           mv cmdline-tools/* cmdline-tools/latest/ || true
 
@@ -50,13 +51,13 @@ jobs:
             "platforms;android-33" \
             "build-tools;33.0.2"
 
-      # -------------------------------
-      # Buildozer (NO auto SDK install)
-      # -------------------------------
+      # --------------------------------
+      # Buildozer
+      # --------------------------------
       - name: Install Buildozer
         run: |
-          pip3 install --upgrade pip
-          pip3 install cython==0.29.36 buildozer
+          python3 -m pip install --upgrade pip
+          python3 -m pip install cython==0.29.36 buildozer
 
       - name: Clean Buildozer state
         run: |
@@ -68,10 +69,10 @@ jobs:
           ANDROID_HOME: /home/runner/android-sdk
           PATH: /home/runner/android-sdk/platform-tools:/home/runner/android-sdk/cmdline-tools/latest/bin:${{ env.PATH }}
         run: |
-          buildozer android debug
+          python3 -m buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: APK
+          name: LockedSDK-APK
           path: bin/*.apk
