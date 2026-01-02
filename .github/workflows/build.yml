@@ -1,34 +1,34 @@
+name: Build Android APK
 
-name: Build (Docker Manual)
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: Prepare Workspace
-        run: |
-          # Fix permissions for Docker
-          sudo chmod -R 777 .
-          # Create bin directory
-          mkdir bin
-          # Verify .so file
-          ls -lh libffmpeg.so
+      - name: Cache Buildozer
+        uses: actions/cache@v3
+        with:
+          path: ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
 
-      - name: Build APK with Docker
-        # We run the official buildozer container directly
+      - name: Build APK with Buildozer (Docker)
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/home/user/hostcwd \
-            -v ${{ github.workspace }}/bin:/home/user/hostcwd/bin \
+            -v "$HOME/.buildozer:/home/user/.buildozer" \
+            -v "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             -w /home/user/hostcwd \
-            kivy/buildozer \
-            buildozer android debug
+            kivy/buildozer android debug
 
-      - name: Upload Artifacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: WildlifeProStudio-APK
           path: bin/*.apk
