@@ -1,45 +1,33 @@
-name: CI
-on:
-  push:
-    branches: [ main ]
+
+name: Build (Docker Manual)
+on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-
+  build-android:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Setup Java 17 (Required for Android builds)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Buildozer
-        run: pip install buildozer cython==0.29.33
-
-      # FIXED: Using the official Buildozer dependency list for Ubuntu 22.04
-      - name: Install Linux Dependencies
+      - name: Prepare Workspace
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev
+          # Fix permissions for Docker
+          sudo chmod -R 777 .
+          # Create bin directory
+          mkdir bin
+          # Verify .so file
+          ls -lh libffmpeg.so
 
-      - name: Build APK
+      - name: Build APK with Docker
+        # We run the official buildozer container directly
         run: |
-          yes | buildozer android debug
+          docker run --rm \
+            -v ${{ github.workspace }}:/home/user/hostcwd \
+            -v ${{ github.workspace }}/bin:/home/user/hostcwd/bin \
+            -w /home/user/hostcwd \
+            kivy/buildozer \
+            buildozer android debug
 
-      - name: Upload artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: package
