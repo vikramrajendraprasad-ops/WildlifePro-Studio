@@ -27,6 +27,11 @@ jobs:
           python3 -m pip install --upgrade pip
           pip3 install cython==0.29.36 buildozer
 
+      # 🔑 THIS IS THE FIX
+      - name: Clean old Buildozer Android SDK
+        run: |
+          rm -rf ~/.buildozer/android
+
       - name: Build APK
         run: |
           buildozer android debug --accept-sdk-license
