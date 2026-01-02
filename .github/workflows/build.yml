@@ -1,3 +1,4 @@
+
 name: Build
 on: [push]
 
@@ -5,20 +6,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4  # Use v4 for better file handling
+      - uses: actions/checkout@v4
 
-      # Fix Permissions (Critical for Docker)
+      # STEP 1: Fix Permissions (Crucial for Docker)
       - name: Fix Permissions
         run: |
           sudo chmod -R 777 .
-          # Verify file exists before we even try to build
-          ls -lh libffmpeg.so || echo "CRITICAL: libffmpeg.so IS MISSING!"
+          
+      # STEP 2: Verify Files Exist (Debug Step)
+      - name: Verify Files
+        run: |
+          ls -la
+          ls -lh libffmpeg.so || echo "WARNING: libffmpeg.so is MISSING"
 
+      # STEP 3: Build with Verbose Logging
       - name: Build
         uses: ArtemSBulgakov/buildozer-action@v1
         id: buildozer
         with:
-          command: buildozer android debug
+          command: buildozer -v android debug
           buildozer_version: stable
 
       - name: Upload APK
