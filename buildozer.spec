@@ -20,7 +20,12 @@ android.minapi = 21
 android.ndk = 25b
 android.archs = arm64-v8a
 
+# Your custom FFmpeg binary
 android.add_libs = libffmpeg.so
+
+android.enable_androidx = True
+android.private_storage = True
 
 [buildozer]
 log_level = 2
+warn_on_root = 1
