@@ -1,32 +1,26 @@
+
 [app]
-# App details
 title = Wildlife Pro Studio
 package.name = wildlifepro
 package.domain = org.wildlifepro
 
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,mp3,wav,flac,ogg
+source.include_exts = py,png,jpg,kv,atlas
 
 version = 2.0
 
-# PyDub Requirements (NO FFmpeg binary!)
-requirements = python3,kivy==2.3.0,kivymd==2.0.0,pillow,pydub,android
+# FIXED VERSIONS - Guaranteed to compile
+requirements = python3,kivy==2.1.0,kivymd==1.1.1,pillow,pydub
 
-# UI Settings
 orientation = portrait
-fullscreen = 0
+android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
 
-# Android 12+ Permissions (Fixed for Poco X3)
-android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE,WAKE_LOCK
-
-# Android Build Config
+# FIXED NDK (matches GitHub Actions)
+android.ndk = 25b
 android.api = 33
 android.minapi = 21
-android.ndk = 26b
 android.archs = arm64-v8a
 android.accept_sdk_license = True
-android.allow_backup = True
 
 [buildozer]
 log_level = 2
-warn_on_root = 0
