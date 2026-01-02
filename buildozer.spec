@@ -1,3 +1,4 @@
+
 [app]
 title = Wildlife Pro Studio
 package.name = wildlifepro
@@ -14,7 +15,6 @@ requirements = python3,kivy==2.3.0,kivymd==1.1.1,pillow,android,pyjnius,pydub
 
 android.permissions = INTERNET,READ_MEDIA_AUDIO
 
-# 🔑 CRITICAL FIX
 android.api = 33
 android.minapi = 21
 android.ndk = 25b
