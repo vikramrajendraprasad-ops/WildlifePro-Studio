@@ -22,10 +22,11 @@ jobs:
       - name: Build APK with Buildozer (Docker)
         run: |
           docker run --rm \
+            --entrypoint bash \
             -v "$HOME/.buildozer:/home/user/.buildozer" \
             -v "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             -w /home/user/hostcwd \
-            kivy/buildozer bash -c "
+            kivy/buildozer -c "
               yes | sdkmanager --licenses &&
               buildozer android debug
             "
