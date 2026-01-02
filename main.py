@@ -1,127 +1,101 @@
 
-import os, threading
-from kivy.utils import platform
-from kivy.clock import Clock
-from kivymd.app import MDApp
-from kivymd.uix.screen import MDScreen
-from kivymd.uix.list import MDList, OneLineIconListItem, IconLeftWidget
-from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.toolbar import MDTopAppBar
-from kivymd.uix.button import MDRaisedButton
-from kivymd.uix.menu import MDDropdownMenu
-from kivymd.toast import toast
+[app]
 
-if platform == 'android':
-    from android.permissions import request_permissions, Permission
-    from jnius import autoclass
+# (str) Title of your application
+title = Wildlife Pro Studio
 
-class WildlifeStudio(MDApp):
-    selected_format = "mp3"
-    selected_channels = "2"
-    channel_map = {"Mono":1, "Stereo":2, "5.1":6, "7.1":8}
+# (str) Package name
+package.name = wildlifepro
 
-    def build(self):
-        self.theme_cls.primary_palette = "Green"
-        self.theme_cls.theme_style = "Dark"
-        
-        screen = MDScreen()
-        layout = MDBoxLayout(orientation='vertical')
+# (str) Package domain (needed for android/ios packaging)
+package.domain = org.wildlifepro
 
-        # Toolbar
-        toolbar = MDTopAppBar(title="Wildlife Pro Studio", right_action_items=[["refresh", lambda x: self.load_files()]])
-        layout.add_widget(toolbar)
+# (str) Source code where the main.py live
+source.dir = .
 
-        # Settings
-        settings = MDBoxLayout(size_hint_y=None, height="60dp", padding=10)
-        self.btn_format = MDRaisedButton(text="MP3", on_release=lambda x: self.menu_format.open())
-        self.btn_channels = MDRaisedButton(text="Stereo", on_release=lambda x: self.menu_channels.open())
-        settings.add_widget(self.btn_format)
-        settings.add_widget(self.btn_channels)
-        layout.add_widget(settings)
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,jpg,kv,atlas,mp3,wav
 
-        # Files
-        self.scroll = MDScrollView()
-        self.list_view = MDList()
-        self.scroll.add_widget(self.list_view)
-        layout.add_widget(self.scroll)
+# (list) Application requirements
+# comma separated e.g. requirements = sqlite3,kivy
+# Note: 'ffmpeg' provides libraries. For pydub, you often need the binary executable.
+requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,android,jnius,pydub,ffmpeg
 
-        # Status
-        self.status = MDRaisedButton(text="Ready", disabled=True)
-        layout.add_widget(self.status)
-        
-        screen.add_widget(layout)
-        self.create_menus()
-        return screen
+# (str) Custom source folders for requirements
+# Sets custom source for any requirements with recipes
+# requirements.source.kivy = ../../kivy
 
-    def create_menus(self):
-        self.menu_format = MDDropdownMenu(self.btn_format, [{"text":f.upper(), "on_release": lambda x=f:self.set_format(x)} for f in ["mp3","wav","flac"]], width_mult=4)
-        self.menu_channels = MDDropdownMenu(self.btn_channels, [{"text":k, "on_release": lambda x=k:self.set_channels(x)} for k in self.channel_map], width_mult=4)
+# (list) Garden requirements
+#garden_requirements =
 
-    def set_format(self, fmt):
-        self.selected_format = fmt
-        self.btn_format.text = fmt.upper()
-        self.menu_format.dismiss()
+# (str) Presplash of the application
+#presplash.filename = %(source.dir)s/data/presplash.png
 
-    def set_channels(self, name):
-        self.selected_channels = str(self.channel_map[name])
-        self.btn_channels.text = name
-        self.menu_channels.dismiss()
+# (str) Icon of the application
+#icon.filename = %(source.dir)s/data/icon.png
 
-    def on_start(self):
-        if platform == 'android':
-            request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE], self.on_permissions)
-            try:
-                Settings = autoclass('android.provider.Settings')
-                Intent = autoclass('android.content.Intent')
-                Uri = autoclass('android.net.Uri')
-                intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:org.wildlifepro.wildlifepro"))
-                autoclass('org.kivy.android.PythonActivity').mActivity.startActivity(intent)
-            except: pass
-        self.load_files()
+# (list) Supported orientations
+# Valid options are: landscape, portrait, portrait-reverse or landscape-reverse
+orientation = portrait
 
-    def on_permissions(self, *args):
-        self.load_files()
+# (bool) Indicate if the application should be fullscreen or not
+fullscreen = 0
 
-    def load_files(self, *args):
-        self.list_view.clear_widgets()
-        path = "/storage/emulated/0/Download/Wildlife"
-        os.makedirs(path, exist_ok=True)
-        
-        exts = ['.mp3','.wav','.m4a','.flac','.ogg']
-        try:
-            files = [f for f in os.listdir(path) if any(f.lower().endswith(e) for e in exts)]
-        except:
-            files = []
-            
-        self.status.text = f"{len(files)} files" if files else "No files"
-        for f in files:
-            item = OneLineIconListItem(text=f, on_release=lambda x,f=os.path.join(path,f): self.convert(f))
-            item.add_widget(IconLeftWidget(icon="music"))
-            self.list_view.add_widget(item)
+# (list) Permissions
+# READ_MEDIA_* are critical for Android 13+
+android.permissions = INTERNET,ACCESS_NETWORK_STATE,WAKE_LOCK,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_AUDIO,READ_MEDIA_IMAGES,MANAGE_EXTERNAL_STORAGE
 
-    def convert(self, input_path):
-        self.status.text = "Converting..."
-        threading.Thread(target=self.process_audio, args=(input_path,)).start()
+# (int) Target Android API, should be as high as possible.
+android.api = 34
 
-    def process_audio(self, input_path):
-        try:
-            from pydub import AudioSegment
-            
-            audio = AudioSegment.from_file(input_path)
-            audio += 5  # Bass boost
-            
-            channels = int(self.selected_channels)
-            audio = audio.set_channels(channels).set_frame_rate(48000)
-            
-            base = os.path.splitext(input_path)[0]
-            output = f"{base}_Pro.{self.selected_format}"
-            audio.export(output, format=self.selected_format)
-            
-            Clock.schedule_once(lambda dt: (self.status.text.__setitem__('text', 'Success!'), toast(f"✅ {os.path.basename(output)}")))
-            Clock.schedule_once(lambda dt: self.load_files(), 1)
-            
-        except Exception as e:
-            Clock.schedule_once(lambda dt: self.status.text.__setitem__('text', f"Error: {e}"))
+# (int) Minimum API your APK will support.
+android.minapi = 21
 
-WildlifeStudio().run()
+# (int) Android SDK version to use
+android.sdk = 34
+
+# (str) Android NDK version to use
+android.ndk = 25b
+
+# (bool) Use --private data storage (True) or --dir public storage (False)
+android.private_storage = True
+
+# (str) Android entry point, default is ok for Kivy-based app
+android.entrypoint = org.kivy.android.PythonActivity
+
+# (list) List of Java .jar files to add to the libs so that pyjnius can access
+#android.add_jars = foo.jar,bar.jar,path/to/more/*.jar
+
+# (list) List of Java files to add to the android project (can be java or a
+# directory containing the files)
+#android.add_src =
+
+# (list) Android AAR archives to add
+#android.add_aars =
+
+# (list) Gradle dependencies to add
+#android.gradle_dependencies =
+
+# (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
+# contains an 'androidx' package (default is False)
+android.enable_androidx = True
+
+# (list) Android architectures to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
+android.archs = arm64-v8a
+
+# (bool) enables Android auto backup feature (Android API >= 23)
+android.allow_backup = True
+
+# (str) The format used to package the app for release mode (aab or apk or aar).
+#android.release_artifact = aab
+
+# (str) The format used to package the app for debug mode (apk or aar).
+#android.debug_artifact = apk
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+log_level = 2
+
+# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
+warn_on_root = 1
