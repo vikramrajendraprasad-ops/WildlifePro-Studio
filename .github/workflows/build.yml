@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Cache Buildozer
@@ -25,7 +25,10 @@ jobs:
             -v "$HOME/.buildozer:/home/user/.buildozer" \
             -v "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             -w /home/user/hostcwd \
-            kivy/buildozer android debug
+            kivy/buildozer bash -c "
+              yes | sdkmanager --licenses &&
+              buildozer android debug
+            "
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
