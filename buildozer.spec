@@ -1,28 +1,36 @@
+
 [app]
-# Application identity
 title = Wildlife Pro Studio
-package.name = wildlife_pro_studio
-package.domain = org.wildlife
+package.name = wildlifepro
+package.domain = org.wildlifepro
 version = 1.0
-version.code = 1
+
 source.dir = .
-
-# Application requirements – must include all needed Python modules and libraries
-requirements = python3,kivy==2.3.0,kivymd,pillow,pyjnius,pydub,ffmpeg
-
-# Android-specific options
-android.permissions = android.permission.READ_EXTERNAL_STORAGE, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.READ_MEDIA_AUDIO, android.permission.READ_MEDIA_VIDEO, android.permission.READ_MEDIA_IMAGES
-
-# Ensure the python-for-android “develop” branch is used (needed for ffmpeg support1)
-p4a.branch = develop
-
-# Supported CPU architectures (include 64-bit for Google Play compliance2)
-android.archs = arm64-v8a, armeabi-v7a
-
-# Android API levels: target Android 13 (API 33) and allow Android 5.0+ (API 21) as minimum
-android.api = 33
-android.minapi = 21
-android.ndk = 25b
-android.ndk_api = 21
+source.include_exts = py,kv,png,jpg,atlas,mp3,wav
 
 orientation = portrait
+fullscreen = 0
+
+# 🔑 KEEP THIS CLEAN
+requirements = python3,kivy==2.3.0,kivymd==1.1.1,pillow,android,pyjnius,pydub
+
+# Android permissions (Android 13 compatible)
+android.permissions = INTERNET,READ_MEDIA_AUDIO,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+
+android.api = 34
+android.minapi = 21
+android.ndk = 25b
+
+# 64-bit only (recommended & faster)
+android.archs = arm64-v8a
+
+# ✅ Bundle your custom FFmpeg binary
+android.add_libs = libffmpeg.so
+
+android.enable_androidx = True
+android.allow_backup = True
+android.private_storage = True
+
+[buildozer]
+log_level = 2
+warn_on_root = 1
