@@ -12,7 +12,7 @@ requirements = python3,kivy
 orientation = portrait
 fullscreen = 0
 
-# 🔒 SDK MUST MATCH WORKFLOW
+# 🔒 MUST MATCH WORKFLOW SDK
 android.api = 33
 android.minapi = 21
 android.ndk = 25b
