@@ -1,34 +1,46 @@
-
-name: Build
-on: [push]
+name: CI
+on:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
 
-      # STEP 1: Fix Permissions (Crucial for Docker)
-      - name: Fix Permissions
-        run: |
-          sudo chmod -R 777 .
-          
-      # STEP 2: Verify Files Exist (Debug Step)
-      - name: Verify Files
-        run: |
-          ls -la
-          ls -lh libffmpeg.so || echo "WARNING: libffmpeg.so is MISSING"
-
-      # STEP 3: Build with Verbose Logging
-      - name: Build
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      # Setup Java 17 (Required for Android builds)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          command: buildozer -v android debug
-          buildozer_version: stable
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Upload APK
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Buildozer
+        run: pip install buildozer cython==0.29.33
+
+      # FIXED: Using the official Buildozer dependency list for Ubuntu 22.04
+      - name: Install Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev
+
+      - name: Build APK
+        run: |
+          yes | buildozer android debug
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
