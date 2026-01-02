@@ -1,4 +1,4 @@
-name: Build Android APK (Locked SDK – Final)
+name: Build Android APK (Locked SDK – Final Stable)
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
 
     steps:
       # -----------------------------
-      # Checkout repository
+      # Checkout source code
       # -----------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
       # -----------------------------
       # Install Android SDK (LOCKED)
       # -----------------------------
-      - name: Install Android SDK (locked)
+      - name: Install Android SDK
         run: |
           mkdir -p $ANDROID_SDK_ROOT
           cd $ANDROID_SDK_ROOT
@@ -65,6 +65,15 @@ jobs:
             "platforms;android-33" \
             "build-tools;33.0.2"
 
+      # --------------------------------------------------
+      # LEGACY FIX: Buildozer expects tools/bin/sdkmanager
+      # --------------------------------------------------
+      - name: Create legacy sdkmanager path for Buildozer
+        run: |
+          mkdir -p /home/runner/android-sdk/tools/bin
+          ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+                 /home/runner/android-sdk/tools/bin/sdkmanager
+
       # -----------------------------
       # Install Buildozer
       # -----------------------------
@@ -74,14 +83,14 @@ jobs:
           python -m pip install cython==0.29.36 buildozer
 
       # -----------------------------
-      # Force clean Buildozer state
+      # Clean Buildozer state
       # -----------------------------
       - name: Clean Buildozer
         run: |
           rm -rf ~/.buildozer
 
       # -----------------------------
-      # Build APK (CRITICAL STEP)
+      # Build APK
       # -----------------------------
       - name: Build APK
         env:
@@ -92,7 +101,7 @@ jobs:
           python -m buildozer android debug
 
       # -----------------------------
-      # Upload APK
+      # Upload APK artifact
       # -----------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
