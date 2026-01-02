@@ -10,19 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Cache Buildozer
-        uses: actions/cache@v3
-        with:
-          path: ~/.buildozer
-          key: buildozer-${{ hashFiles('buildozer.spec') }}
 
       - name: Build APK with Buildozer (Docker)
         run: |
           docker run --rm \
-            -v "$HOME/.buildozer:/home/user/.buildozer" \
             -v "$GITHUB_WORKSPACE:/home/user/hostcwd" \
             -w /home/user/hostcwd \
             kivy/buildozer android debug --accept-sdk-license
