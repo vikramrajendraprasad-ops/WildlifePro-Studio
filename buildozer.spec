@@ -12,7 +12,8 @@ package.domain = org.wildlifepro
 
 # (str) Source code where the main.py live
 source.dir = .
-
+# (str) Application versioning (method 1)
+version = 1.0
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,mp3,wav
 
